@@ -1,0 +1,7 @@
+分类运行的exe文件需要以下dll文件release版本
+libgcc_s_seh-1.dll
+libgfortran-3.dll
+libmxnet.dll     436兆，mxnet1.0版本
+libopenblas.dll
+libquadmath-0.dll
+opencv_world310.dll
