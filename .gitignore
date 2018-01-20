@@ -1,0 +1,10 @@
+/mxnet_cpp/x64
+/mxnet_cpp.VC.db
+/mxnet_cpp.VC.VC.opendb
+/x64
+/.vs
+/Debug
+/ipch
+/mxnet_cpp/DLL/cudnn64_7.dll
+/mxnet_cpp/DLL/libmxnet.dll
+/.gitignore
