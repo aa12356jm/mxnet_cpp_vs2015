@@ -1,49 +1,11 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
-/*!
- *  Copyright (c) 2015 by Xiao Liu, pertusa, caprice-j
- * \file image_classification-predict.cpp
- * \brief C++ predict example of mxnet
- */
-
-//
-//  File: image-classification-predict.cpp
-//  This is a simple predictor which shows
-//  how to use c api for image classfication
-//  It uses opencv for image reading
-//  Created by liuxiao on 12/9/15.
-//  Thanks to : pertusa, caprice-j, sofiawu, tqchen, piiswrong
-//  Home Page: www.liuxiao.org
-//  E-mail: liuxiao@foxmail.com
-//
-
 #include <stdio.h>
 
 // Path for c_predict_api
 #include "mxnet/c_predict_api.h"
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-
 #include <opencv2/opencv.hpp>
 
 const mx_float DEFAULT_MEAN = 117.0;
@@ -91,8 +53,7 @@ class BufferFile {
     }
 };
 
-void GetImageFile(const std::string image_file,
-                  mx_float* image_data, const int channels,
+void GetImageFile(const std::string image_file,mx_float* image_data, const int channels,
                   const cv::Size resize_size, const mx_float* mean_data = nullptr) {
     // Read all kinds of file into a BGR color 3 channels image
     cv::Mat im_ori = cv::imread(image_file, cv::IMREAD_COLOR);
@@ -103,18 +64,17 @@ void GetImageFile(const std::string image_file,
     }
 
     cv::Mat im;
-
     resize(im_ori, im, resize_size);
-
     int size = im.rows * im.cols * channels;
 
     mx_float* ptr_image_r = image_data;
     mx_float* ptr_image_g = image_data + size / 3;
-    mx_float* ptr_image_b = image_data + size / 3 * 2;
-
+    mx_float* ptr_image_b = image_data + size / 3 * 2; 
     float mean_b, mean_g, mean_r;
-    mean_b = mean_g = mean_r = DEFAULT_MEAN;
-
+	mean_b = 195;
+	mean_g = 196;
+	mean_r = 196;
+	//mean_b = mean_g = mean_r = DEFAULT_MEAN;
     for (int i = 0; i < im.rows; i++) {
         uchar* data = im.ptr<uchar>(i);
 
@@ -139,6 +99,7 @@ void GetImageFile(const std::string image_file,
 
 // LoadSynsets
 // Code from : https://github.com/pertusa/mxnet_predict_cc/blob/master/mxnet_predict.cc
+//加载数据分类的label
 std::vector<std::string> LoadSynset(std::string synset_file) {
     std::ifstream fi(synset_file.c_str());
 
@@ -154,9 +115,7 @@ std::vector<std::string> LoadSynset(std::string synset_file) {
         getline(fi, lemma);
         output.push_back(lemma);
     }
-
     fi.close();
-
     return output;
 }
 
@@ -170,57 +129,53 @@ void PrintOutputResult(const std::vector<float>& data, const std::vector<std::st
 
     for ( int i = 0; i < static_cast<int>(data.size()); i++ ) {
         printf("Accuracy[%d] = %.8f\n", i, data[i]);
-
         if ( data[i] > best_accuracy ) {
             best_accuracy = data[i];
             best_idx = i;
         }
     }
 
-    printf("Best Result: [%s] id = %d, accuracy = %.8f\n",
-    synset[best_idx].c_str(), best_idx, best_accuracy);
+    printf("Best Result: [%s] id = %d, accuracy = %.8f\n",synset[best_idx].c_str(), best_idx, best_accuracy);
 }
 
-int main(int argc, char* argv[]) {
-    /*if (argc < 2) {
-        std::cout << "No test image here." << std::endl
-        << "Usage: ./image-classification-predict apple.jpg" << std::endl;
-        return 0;
-    }*/
-
+int main() {
     std::string test_file;
-    test_file = std::string("dog.jpg");
+    test_file = std::string("7_2.jpg");
 
-    // Models path for your model, you have to modify it
-    std::string json_file = "model/Inception/Inception-BN-symbol.json";
-    std::string param_file = "model/Inception/Inception-BN-0126.params";
-    std::string synset_file = "model/Inception/synset.txt";
-    std::string nd_file = "model/Inception/mean_224.nd";  //这个均值文件非必须，训练阶段自动生成，测试阶段mean_224.nd可以不存在,但是变量一定要定义
+	std::string json_file = "./model/mxnet_oneClick/lenetweights-symbol.json";
+	std::string param_file = "./model/mxnet_oneClick/lenetweights-0040.params";
+	std::string synset_file = "./model/mxnet_oneClick/synset.txt";
+	std::string nd_file = "./model/mxnet_oneClick/mean.bin";  //这个均值文件非必须，训练阶段自动生成，测试阶段mean_224.nd可以不存在,但是变量一定要定义   
 
-    BufferFile json_data(json_file);
+	//std::string json_file = "./model/inception/Inception-BN-symbol.json";
+	//std::string param_file = "./model/inception/Inception-BN-0126.params";
+	//std::string synset_file = "./model/inception/synset.txt";
+	//std::string nd_file = "./model/inception/mean_224.nd";  //这个均值文件非必须，训练阶段自动生成，测试阶段mean_224.nd可以不存在,但是变量一定要定义
+
+	BufferFile json_data(json_file);//将json文件和params文件读进来
     BufferFile param_data(param_file);
 
     // Parameters
-    int dev_type = 1;  // 1: cpu, 2: gpu，经测试cpu和gpu均可使用
+    int dev_type = 2;  // 1: cpu, 2: gpu，经测试cpu和gpu均可使用
     int dev_id = 0;  // arbitrary.
     mx_uint num_input_nodes = 1;  // 1 for feedforward
     const char* input_key[1] = {"data"};
     const char** input_keys = input_key;
 
-    // Image size and channels
-    int width = 224;
-    int height = 224;
+    // Image size and channels 这个是设置输入图像的大小，需要根据模型训练时候的大小来设置
+    int width = 299;
+    int height = 299;
     int channels = 3;
 
     const mx_uint input_shape_indptr[2] = { 0, 4 };
-    const mx_uint input_shape_data[4] = { 1,
+	//输入的是一个四维的数据
+	const mx_uint input_shape_data[4] = { 1,
                                         static_cast<mx_uint>(channels),
                                         static_cast<mx_uint>(height),
                                         static_cast<mx_uint>(width)};
     PredictorHandle pred_hnd = 0;
 
-    if (json_data.GetLength() == 0 ||
-        param_data.GetLength() == 0) {
+    if (json_data.GetLength() == 0 ||param_data.GetLength() == 0) {
         return -1;
     }
 
@@ -251,24 +206,25 @@ int main(int argc, char* argv[]) {
         const char* nd_key = 0;
         mx_uint nd_ndim = 0;
 
-        MXNDListCreate((const char*)nd_buf.GetBuffer(),
-                   nd_buf.GetLength(),
-                   &nd_hnd, &nd_len);
-
+        MXNDListCreate((const char*)nd_buf.GetBuffer(),nd_buf.GetLength(),&nd_hnd, &nd_len);
         MXNDListGet(nd_hnd, nd_index, &nd_key, &nd_data, &nd_shape, &nd_ndim);
     }
 
     // Read Image Data
     std::vector<mx_float> image_data = std::vector<mx_float>(image_size);
 
-    GetImageFile(test_file, image_data.data(),
-                 channels, cv::Size(width, height), nd_data);
+    GetImageFile(test_file, image_data.data(),channels, cv::Size(width, height), nd_data);
 
     // Set Input Image
     MXPredSetInput(pred_hnd, "data", image_data.data(), image_size);
 
+	double start = (double)cvGetTickCount();
     // Do Predict Forward
     MXPredForward(pred_hnd);
+
+	double time = (double)cvGetTickCount() - start;
+
+	printf("run time = %gms\n", time /(cvGetTickFrequency() * 1000));//毫秒
 
     mx_uint output_index = 0;
 
